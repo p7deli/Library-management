@@ -3,6 +3,7 @@ from tkinter import ttk
 from tkcalendar import DateEntry
 import db_setting as db_s
 from tkinter import messagebox
+import datetime
 
 
 WIDTH, HEIGHT = 800, 400
@@ -128,23 +129,25 @@ class LibraryApp(tk.Tk):
         frame_1 = ttk.Frame(tab)
         frame_1.grid(row=0, column=0)
 
+        members, books = db_s.show_member_nam_book_name()
+
         ttk.Label(frame_1, text='نام عضو:').grid(row=0, column=0, padx=10, pady=(50, 10))
-        self.member_name_borrow = ttk.Combobox(frame_1, width=30, values=('پوریا', 'علی'))
+        self.member_name_borrow = ttk.Combobox(frame_1, width=30, values=members)
         self.member_name_borrow.grid(row=0, column=1, padx=10, pady=(50, 10))
 
         ttk.Label(frame_1, text='نام کتاب:').grid(row=1, column=0, padx=10, pady=10)
-        self.title_book_borrow = ttk.Combobox(frame_1, width=30, values=('ریاضی', 'فیزیک'))
+        self.title_book_borrow = ttk.Combobox(frame_1, width=30, values=books)
         self.title_book_borrow.grid(row=1, column=1, padx=10, pady=10)
 
         ttk.Label(frame_1, text='تاریخ امانت:').grid(row=2, column=0, padx=10, pady=10)
-        self.borrow_book = DateEntry(frame_1, width=30, date_pattern='y-mm-dd')
-        self.borrow_book.grid(row=2, column=1, padx=10, pady=10)
+        self.borrow_date = DateEntry(frame_1, width=30, date_pattern='y-mm-dd')
+        self.borrow_date.grid(row=2, column=1, padx=10, pady=10)
 
         ttk.Label(frame_1, text='تاریخ برگشت:').grid(row=3, column=0, padx=10, pady=10)
-        self.return_book = DateEntry(frame_1, width=30, date_pattern='y-mm-dd')
-        self.return_book.grid(row=3, column=1, padx=10, pady=10)
+        self.return_date = DateEntry(frame_1, width=30, date_pattern='y-mm-dd')
+        self.return_date.grid(row=3, column=1, padx=10, pady=10)
 
-        ttk.Button(frame_1, text='افزودن امانت', width=45).grid(row=4, column=0, columnspan=2)
+        ttk.Button(frame_1, text='افزودن امانت', width=45, command=self.add_borrowings).grid(row=4, column=0, columnspan=2)
         ttk.Button(frame_1, text='حذف امانت', width=45).grid(row=5, column=0, columnspan=2, pady=5)
 
         # -------- Table
@@ -266,6 +269,25 @@ class LibraryApp(tk.Tk):
                 db_s.delete_books(id_book_)
                 self.show_book_table()
 
+    # ----------- Tab Borrow
+    def add_borrowings(self):
+        id_member = self.member_name_borrow.get().split('.')[0]
+        id_book = self.title_book_borrow.get().split('.')[0]
+        borrow_date = self.borrow_date.get_date()
+        return_date = self.return_date.get_date()
+
+        if id_member != '' and id_book != '':
+            count_date = datetime.datetime(return_date.year, return_date.month, return_date.day)-datetime.datetime(borrow_date.year, borrow_date.month, borrow_date.day)
+            if count_date.days >= 1:
+                result = db_s.add_borrow(id_member, id_book, borrow_date, return_date)
+                if result[0]:
+                    messagebox.showinfo("seccuessfully", result[1])
+                else:
+                    messagebox.showerror('Error', result[1])
+            else:
+                messagebox.showerror('Error', 'تعداد روز امانت باید بیشتر از یک روز باشد')
+        else:
+            messagebox.showerror('Error', 'لطفا تمام موارد را وارد کنید')
 
 if __name__ == '__main__':
     app = LibraryApp()

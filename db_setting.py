@@ -106,8 +106,7 @@ def add_borrow(member_id, book_id, borrow_date, return_date):
         
         member = cursor.fetchone()
         if not member:
-            print('Error, member not found ...')
-            return
+            return False, 'Error, member not found ...'
         
         cursor.execute('''
             SELECT * FROM books WHERE book_id=%s;
@@ -115,12 +114,11 @@ def add_borrow(member_id, book_id, borrow_date, return_date):
 
         book = cursor.fetchone()
         if not book:
-            print('Error, book not found ...')
-            return
+            return False, 'Error, book not found ...'
         
         if not book[-1]:
-            print('Error, book not available ...')
-            return
+            
+            return False, 'Error, book not available ...'
         
         cursor.execute('''
                 INSERT INTO borrowings (member_id, book_id, borrow_date, return_date) VALUES (%s, %s, %s, %s);
@@ -132,13 +130,25 @@ def add_borrow(member_id, book_id, borrow_date, return_date):
         
         cnn.commit()
         cnn.close()
-        print('add borrow successfully.')
+        return True, 'add borrow successfully.'
 
     except Exception as e:
         print(f'Error\n{e}')
         cnn.rollback()
     finally:
         cnn.close()
+
+def show_member_nam_book_name():
+    cursor, cnn = connection()
+
+    cursor.execute('''SELECT member_id, name FROM members''')
+    members = [str(name[0])+'.'+name[1] for name in cursor]
+
+    cursor.execute('''SELECT book_id, title FROM books''')
+    books = [str(name[0])+'.'+name[1] for name in cursor]
+
+    cnn.close()
+    return members, books
 
 
 def delete_members(member_id):
@@ -193,4 +203,4 @@ def back_book(book_id):
 
 
 if __name__ == '__main__':
-    print(show_books_for_table())
+    print(show_member_nam_book_name())
