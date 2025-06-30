@@ -148,7 +148,7 @@ class LibraryApp(tk.Tk):
         self.return_date.grid(row=3, column=1, padx=10, pady=10)
 
         ttk.Button(frame_1, text='افزودن امانت', width=45, command=self.add_borrowings).grid(row=4, column=0, columnspan=2)
-        ttk.Button(frame_1, text='حذف امانت', width=45).grid(row=5, column=0, columnspan=2, pady=5)
+        ttk.Button(frame_1, text='حذف امانت', width=45, command=self.delete_borrow_table).grid(row=5, column=0, columnspan=2, pady=5)
 
         # -------- Table
         frame_2 = ttk.Frame(tab)
@@ -171,8 +171,7 @@ class LibraryApp(tk.Tk):
                 self.table_3.column(column, width=100, anchor='center')
                 self.table_3.heading(column, text=column, anchor='center')
         
-        for i in range(1, 50):  
-            self.table_3.insert('', tk.END, values=(i, 'دکتر حسابی', 'ریاضی', '1404-03-04', '1404-03-20'))
+        self.show_borrow_table()
 
     def tab_back_book(self):
 
@@ -200,10 +199,8 @@ class LibraryApp(tk.Tk):
                 self.table_4.column(column, width=100, anchor='center')
                 self.table_4.heading(column, text=column, anchor='center')
         
-        for i in range(1, 50):  
-            self.table_4.insert('', tk.END, values=(i, 'دکتر حسابی', 'ریاضی', '1404-03-04', '1404-03-20'))
-        
-        ttk.Button(tab, text='برگشت امانت', width=45).pack(padx=10, pady=10)
+        self.show_back_book_table()
+        ttk.Button(tab, text='برگشت امانت', width=45, command=self.back_book_).pack(padx=10, pady=10)
 
     # ---------------------- database settings
     # -------- Tab Members
@@ -282,12 +279,53 @@ class LibraryApp(tk.Tk):
                 result = db_s.add_borrow(id_member, id_book, borrow_date, return_date)
                 if result[0]:
                     messagebox.showinfo("seccuessfully", result[1])
+                    self.show_borrow_table()
+                    self.show_book_table()
+                    self.show_back_book_table()
                 else:
                     messagebox.showerror('Error', result[1])
             else:
                 messagebox.showerror('Error', 'تعداد روز امانت باید بیشتر از یک روز باشد')
         else:
             messagebox.showerror('Error', 'لطفا تمام موارد را وارد کنید')
+    
+    def show_borrow_table(self):
+        self.table_3.delete(*self.table_3.get_children())
+        items = db_s.show_borrow_for_table()
+        for item in items:
+            self.table_3.insert('', tk.END, values=item)
+    
+    def delete_borrow_table(self):
+        selection_ = self.table_3.selection()
+        if selection_:
+            ques = messagebox.askyesno('Ques', 'از حذف این مورد مطمئنی؟')
+            if ques:
+                borrow_id = self.table_3.item(selection_)['values'][0]
+                db_s.delete_borrow_(borrow_id)
+                messagebox.showinfo('Successfully', 'امانت با موفقیت حذف شد')
+                self.show_borrow_table()
+                self.show_book_table()
+                self.show_back_book_table()
+    
+    # ---------------- Tab Back Book
+    def show_back_book_table(self):
+        self.table_4.delete(*self.table_4.get_children())
+        items = db_s.show_borrow_for_table()
+        for item in items:
+            self.table_4.insert('', tk.END, values=item)
+    
+    def back_book_(self):
+        selection_ = self.table_4.selection()
+        if selection_:
+            ques = messagebox.askyesno('Ques', 'از برگشت این کتاب مطمئنی؟')
+            if ques:
+                borrow_id = self.table_4.item(selection_)['values'][0]
+                db_s.delete_borrow_(borrow_id)
+                messagebox.showinfo('Successfully', 'امانت با موفقیت برگشت داده شد')
+                self.show_borrow_table()
+                self.show_book_table()
+                self.show_back_book_table()
+
 
 if __name__ == '__main__':
     app = LibraryApp()

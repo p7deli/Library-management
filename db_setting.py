@@ -106,7 +106,7 @@ def add_borrow(member_id, book_id, borrow_date, return_date):
         
         member = cursor.fetchone()
         if not member:
-            return False, 'Error, member not found ...'
+            return False, 'عضوی با این مشخصات یافت نشد ...'
         
         cursor.execute('''
             SELECT * FROM books WHERE book_id=%s;
@@ -114,11 +114,11 @@ def add_borrow(member_id, book_id, borrow_date, return_date):
 
         book = cursor.fetchone()
         if not book:
-            return False, 'Error, book not found ...'
+            return False, 'کتابی با این مشخصات یافت نشد'
         
         if not book[-1]:
             
-            return False, 'Error, book not available ...'
+            return False, 'کتاب در دسترس نیست'
         
         cursor.execute('''
                 INSERT INTO borrowings (member_id, book_id, borrow_date, return_date) VALUES (%s, %s, %s, %s);
@@ -130,13 +130,24 @@ def add_borrow(member_id, book_id, borrow_date, return_date):
         
         cnn.commit()
         cnn.close()
-        return True, 'add borrow successfully.'
+        return True, 'امانت با موفقیت ثبت شد'
 
     except Exception as e:
         print(f'Error\n{e}')
         cnn.rollback()
     finally:
         cnn.close()
+
+def show_borrow_for_table():
+    cursor, cnn = connection()
+
+    cursor.execute('''SELECT borrowing_id, m.name, b.title, borrow_date, return_date 
+                    FROM borrowings 
+                    JOIN members m ON m.member_id=borrowings.member_id
+                    JOIN books b ON b.book_id=borrowings.book_id''')
+    borrows = [borrow for borrow in cursor]
+    cnn.close()
+    return borrows
 
 def show_member_nam_book_name():
     cursor, cnn = connection()
@@ -150,6 +161,18 @@ def show_member_nam_book_name():
     cnn.close()
     return members, books
 
+def delete_borrow_(borrow_id):
+    cursor, cnn = connection()
+    cursor.execute('''SELECT book_id FROM borrowings WHERE borrowing_id=%s;''', (borrow_id,))
+    book_id = cursor.fetchone()[0]
+
+    cursor.execute('''
+                UPDATE books SET available=TRUE WHERE book_id=%s;
+            ''', (book_id,))
+    cnn.commit()
+
+    cursor.execute('''DELETE FROM borrowings WHERE borrowing_id=%s;''', (borrow_id,))
+    cnn.commit()
 
 def delete_members(member_id):
     cursor, cnn = connection()
@@ -203,4 +226,4 @@ def back_book(book_id):
 
 
 if __name__ == '__main__':
-    print(show_member_nam_book_name())
+    print(show_borrow_for_table())
