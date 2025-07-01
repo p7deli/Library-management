@@ -184,7 +184,7 @@ class LibraryApp(tk.Tk):
 
         scrollbar = tk.Scrollbar(frame_2)
 
-        columns_ = ['آیدی', 'عضو', 'کتاب', 'تاریخ امانت', 'تاریخ برگشت']
+        columns_ = ['آیدی', 'عضو', 'کتاب', 'تاریخ امانت', 'تاریخ برگشت', 'وضعیت برگشت']
         self.table_4 = ttk.Treeview(frame_2, columns=columns_, show='headings', height=12, yscrollcommand=scrollbar.set)
         self.table_4.pack(fill=tk.Y, side=tk.LEFT, padx=10, pady=(20, 10))
         scrollbar.config(command=self.table_4.yview)
@@ -213,7 +213,7 @@ class LibraryApp(tk.Tk):
             self.member_email.delete(0, tk.END)
             self.member_phone.delete(0, tk.END)
             self.show_member_table()
-
+            self.update_data()
         else:
             messagebox.showerror('Error', 'لطفا موارد خواسته شده را وارد کنید')
     
@@ -242,7 +242,7 @@ class LibraryApp(tk.Tk):
             self.author_book.delete(0, tk.END)
             self.isbn_book.delete(0, tk.END)
             self.show_book_table()
-
+            self.update_data()
         else:
             messagebox.showerror('Error', 'لطفا موارد خواسته شده را وارد کنید')
     
@@ -314,7 +314,7 @@ class LibraryApp(tk.Tk):
     # ---------------- Tab Back Book
     def show_back_book_table(self):
         self.table_4.delete(*self.table_4.get_children())
-        items = db_s.show_borrow_for_table()
+        items = db_s.show_borrow_for_table_back_book()
         for item in items:
             self.table_4.insert('', tk.END, values=item)
     
@@ -324,11 +324,17 @@ class LibraryApp(tk.Tk):
             ques = messagebox.askyesno('Ques', 'از برگشت این کتاب مطمئنی؟')
             if ques:
                 borrow_id = self.table_4.item(selection_)['values'][0]
-                db_s.delete_borrow_(borrow_id)
+                db_s.back_book(borrow_id)
                 messagebox.showinfo('Successfully', 'امانت با موفقیت برگشت داده شد')
                 self.show_borrow_table()
                 self.show_book_table()
                 self.show_back_book_table()
+    
+    # --------- Update
+    def update_data(self):
+        members, books = db_s.show_member_nam_book_name()
+        self.member_name_borrow.config(values=members)
+        self.title_book_borrow.config(values=books)
 
 
 if __name__ == '__main__':

@@ -1,4 +1,5 @@
 import mysql.connector as conn
+import datetime
 
 
 def connection():
@@ -45,6 +46,7 @@ def create_tables():
             book_id INT,
             borrow_date DATE,
             return_date DATE,
+            actual_return_date DATE DEFAULT NULL,
             FOREIGN KEY (member_id) REFERENCES members(member_id),
             FOREIGN KEY (book_id) REFERENCES books(book_id))
     ''')
@@ -148,6 +150,17 @@ def show_borrow_for_table():
     cnn.close()
     return borrows
 
+def show_borrow_for_table_back_book():
+    cursor, cnn = connection()
+
+    cursor.execute('''SELECT borrowing_id, m.name, b.title, borrow_date, return_date, actual_return_date 
+                    FROM borrowings 
+                    JOIN members m ON m.member_id=borrowings.member_id
+                    JOIN books b ON b.book_id=borrowings.book_id''')
+    borrows = [borrow for borrow in cursor]
+    cnn.close()
+    return borrows
+
 def show_member_nam_book_name():
     cursor, cnn = connection()
 
@@ -205,25 +218,22 @@ def delete_books(book_id):
         return True, 'کتاب با موفقیت حذف شد'
 
 
-def back_book(book_id):
+def back_book(borrowing_id):
     cursor, cnn = connection()
+    cursor.execute('''SELECT book_id FROM borrowings WHERE borrowing_id=%s;''', (borrowing_id,))
+    book_id = cursor.fetchone()[0]
 
-    cursor.execute('''SELECT * FROM borrowings WHERE book_id=%s;''', (book_id,))
-    borrow = cursor.fetchone()
-
-    if borrow:
-        cursor.execute('''DELETE FROM borrowings WHERE book_id=%s;''', (book_id,))
-        cnn.commit()
-        cursor.execute('''
+    cursor.execute('''
                 UPDATE books SET available=TRUE WHERE book_id=%s;
             ''', (book_id,))
-        cnn.commit()
+    cnn.commit()
 
-        cnn.close()
-
-        print('book back successfully')
-    else:
-        print('Error, book not found')
+    today = datetime.datetime.today()
+    cursor.execute('''
+                UPDATE borrowings SET actual_return_date=%s WHERE borrowing_id=%s;
+            ''', (today, borrowing_id))
+    cnn.commit()
+    cnn.close()
 
 
 if __name__ == '__main__':
