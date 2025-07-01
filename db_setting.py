@@ -117,7 +117,6 @@ def add_borrow(member_id, book_id, borrow_date, return_date):
             return False, 'کتابی با این مشخصات یافت نشد'
         
         if not book[-1]:
-            
             return False, 'کتاب در دسترس نیست'
         
         cursor.execute('''
@@ -196,12 +195,14 @@ def delete_books(book_id):
     book = cursor.fetchone()
 
     if book:
-        print('Error, book is in the existing borrowings table')
-        return
+        cnn.close()
+        return False, 'این کتاب در حال حاظر امانت داده شده'
     
-    cursor.execute('''DELETE FROM books WHERE book_id=%s;''', (book_id,))
-    cnn.commit()
-    cnn.close()
+    else:
+        cursor.execute('''DELETE FROM books WHERE book_id=%s;''', (book_id,))
+        cnn.commit()
+        cnn.close()
+        return True, 'کتاب با موفقیت حذف شد'
 
 
 def back_book(book_id):

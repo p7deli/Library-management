@@ -263,8 +263,12 @@ class LibraryApp(tk.Tk):
             ques = messagebox.askyesno('Ques', 'از حذف این مورد مطمئنی؟')
             if ques:
                 id_book_ = self.table_2.item(selection_)['values'][0]
-                db_s.delete_books(id_book_)
-                self.show_book_table()
+                res = db_s.delete_books(id_book_)
+                if res[0]:
+                    messagebox.showinfo('Seccussfully', res[1])
+                    self.show_book_table()
+                else:
+                    messagebox.showerror('Error', res[1])
 
     # ----------- Tab Borrow
     def add_borrowings(self):
@@ -278,7 +282,7 @@ class LibraryApp(tk.Tk):
             if count_date.days >= 1:
                 result = db_s.add_borrow(id_member, id_book, borrow_date, return_date)
                 if result[0]:
-                    messagebox.showinfo("seccuessfully", result[1])
+                    messagebox.showinfo("seccussfully", result[1])
                     self.show_borrow_table()
                     self.show_book_table()
                     self.show_back_book_table()
