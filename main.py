@@ -30,6 +30,7 @@ class LibraryApp(tk.Tk):
         self.tab_books()
         self.tab_borrowings()
         self.tab_back_book()
+        self.tab_member_stats()
 
     def tab_members(self):
         
@@ -190,7 +191,6 @@ class LibraryApp(tk.Tk):
         scrollbar.config(command=self.table_4.yview)
         scrollbar.pack(side=tk.RIGHT, fill=tk.Y, pady=(20, 10))
         
-
         for column in columns_:
             if column == 'آیدی':
                 self.table_4.column(column, width=50, anchor='center')
@@ -201,6 +201,43 @@ class LibraryApp(tk.Tk):
         
         self.show_back_book_table()
         ttk.Button(tab, text='برگشت امانت', width=45, command=self.back_book_).pack(padx=10, pady=10)
+    
+    def tab_member_stats(self):
+
+        tab = ttk.Frame(self.notebook)
+        self.notebook.add(tab, text='بخش وضعیت عضوها')
+
+        frame_1 = ttk.Frame(tab)
+        frame_1.grid(row=0, column=0, padx=5, pady=5)
+
+        ttk.Label(frame_1, text='از تاریخ:').grid(row=0, column=0, padx=5, pady=10)
+        self.member_stat_date_1 = DateEntry(frame_1, width=20, date_pattern='y-mm-dd')
+        self.member_stat_date_1.grid(row=0, column=1, padx=5, pady=10)
+
+        ttk.Label(frame_1, text='تا تاریخ:').grid(row=0, column=2, padx=5, pady=10)
+        self.member_stat_date_2 = DateEntry(frame_1, width=20, date_pattern='y-mm-dd')
+        self.member_stat_date_2.grid(row=0, column=3, padx=5, pady=10)
+
+        ttk.Button(tab, text='جستجو', width=20, command=self.show_result_member_stats).grid(row=0, column=4, padx=5, pady=10)
+
+        frame_2 = ttk.Frame(tab)
+        frame_2.grid(row=1, column=0, padx=5, pady=5)
+
+        scrollbar = tk.Scrollbar(frame_2)
+
+        columns_ = ['آیدی', 'عضو', 'تعداد']
+        self.table_5 = ttk.Treeview(frame_2, columns=columns_, show='headings', height=12, yscrollcommand=scrollbar.set)
+        self.table_5.pack(fill=tk.Y, side=tk.LEFT, padx=10, pady=(20, 10))
+        scrollbar.config(command=self.table_5.yview)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y, pady=(20, 10))
+        
+        for column in columns_:
+            if column == 'آیدی':
+                self.table_5.column(column, width=50, anchor='center')
+                self.table_5.heading(column, text=column, anchor='center')
+            else:
+                self.table_5.column(column, width=150, anchor='center')
+                self.table_5.heading(column, text=column, anchor='center')
 
     # ---------------------- database settings
     # -------- Tab Members
@@ -324,17 +361,33 @@ class LibraryApp(tk.Tk):
             ques = messagebox.askyesno('Ques', 'از برگشت این کتاب مطمئنی؟')
             if ques:
                 borrow_id = self.table_4.item(selection_)['values'][0]
-                db_s.back_book(borrow_id)
-                messagebox.showinfo('Successfully', 'امانت با موفقیت برگشت داده شد')
-                self.show_borrow_table()
-                self.show_book_table()
-                self.show_back_book_table()
+                result = db_s.back_book(borrow_id)
+                if result[0]:
+                    messagebox.showinfo('Successfully', result[1])
+                    self.show_borrow_table()
+                    self.show_book_table()
+                    self.show_back_book_table()
+                else:
+                    messagebox.showerror('Error', result[1])
+    
+    # --------- member stats
+    def show_result_member_stats(self):
+
+        start_date = self.member_stat_date_1.get_date()
+        end_date = self.member_stat_date_2.get_date()
+
+        self.table_5.delete(*self.table_5.get_children())
+        items = db_s.show_member_stats(start_date, end_date)
+        for item in items:
+            self.table_5.insert('', tk.END, values=item)
     
     # --------- Update
     def update_data(self):
         members, books = db_s.show_member_nam_book_name()
         self.member_name_borrow.config(values=members)
         self.title_book_borrow.config(values=books)
+    
+
 
 
 if __name__ == '__main__':

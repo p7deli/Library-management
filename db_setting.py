@@ -200,7 +200,6 @@ def delete_members(member_id):
     cnn.commit()
     cnn.close()
 
-
 def delete_books(book_id):
     cursor, cnn = connection()
 
@@ -217,23 +216,40 @@ def delete_books(book_id):
         cnn.close()
         return True, 'کتاب با موفقیت حذف شد'
 
-
 def back_book(borrowing_id):
     cursor, cnn = connection()
-    cursor.execute('''SELECT book_id FROM borrowings WHERE borrowing_id=%s;''', (borrowing_id,))
-    book_id = cursor.fetchone()[0]
+    cursor.execute('''SELECT book_id, actual_return_date FROM borrowings WHERE borrowing_id=%s;''', (borrowing_id,))
+    book_id, actual_return_date = cursor.fetchone()
 
-    cursor.execute('''
-                UPDATE books SET available=TRUE WHERE book_id=%s;
-            ''', (book_id,))
-    cnn.commit()
+    if actual_return_date == None:
+        cursor.execute('''
+                    UPDATE books SET available=TRUE WHERE book_id=%s;
+                ''', (book_id,))
+        cnn.commit()
 
-    today = datetime.datetime.today()
-    cursor.execute('''
-                UPDATE borrowings SET actual_return_date=%s WHERE borrowing_id=%s;
-            ''', (today, borrowing_id))
-    cnn.commit()
+        today = datetime.datetime.today()
+        cursor.execute('''
+                    UPDATE borrowings SET actual_return_date=%s WHERE borrowing_id=%s;
+                ''', (today, borrowing_id))
+        cnn.commit()
+        cnn.close()
+        return True, 'امانت با موفقیت برگشت داده شد'
+    else:
+        return False, 'این مورد قبلا برگشت خورده'
+
+# ----------------- member stats
+def show_member_stats(start_date, end_date):
+    cursor, cnn = connection()
+
+    cursor.execute('''SELECT m.member_id, m.name, COUNT(b.borrowing_id) as borrow_count
+                    FROM members m
+                    LEFT JOIN borrowings b ON m.member_id = b.member_id
+                    AND b.borrow_date BETWEEN %s AND %s
+                    GROUP BY m.member_id, m.name
+                    ORDER BY borrow_count DESC;''', (start_date, end_date))
+    result = cursor.fetchall()
     cnn.close()
+    return result
 
 
 if __name__ == '__main__':
