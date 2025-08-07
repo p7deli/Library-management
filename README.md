@@ -58,4 +58,4 @@ python main.py
 ---
 
 **تهیه‌کننده:**
-- پروژه مدیریت کتابخانه با پایتون و MySQL 
+- poria delavariyan
