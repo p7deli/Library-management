@@ -3,7 +3,8 @@ from tkinter import ttk
 from tkcalendar import DateEntry
 import db_setting as db_s
 from tkinter import messagebox
-import datetime
+import jdatetime
+from shamsicalendar import shamsi_calendar
 
 
 WIDTH, HEIGHT = 800, 400
@@ -141,11 +142,13 @@ class LibraryApp(tk.Tk):
         self.title_book_borrow.grid(row=1, column=1, padx=10, pady=10)
 
         ttk.Label(frame_1, text='تاریخ امانت:').grid(row=2, column=0, padx=10, pady=10)
-        self.borrow_date = DateEntry(frame_1, width=30, date_pattern='y-mm-dd')
+        # self.borrow_date = DateEntry(frame_1, width=30, date_pattern='y-mm-dd')
+        self.borrow_date = shamsi_calendar.ShamsiDateEntry(frame_1)
         self.borrow_date.grid(row=2, column=1, padx=10, pady=10)
 
         ttk.Label(frame_1, text='تاریخ برگشت:').grid(row=3, column=0, padx=10, pady=10)
-        self.return_date = DateEntry(frame_1, width=30, date_pattern='y-mm-dd')
+        # self.return_date = DateEntry(frame_1, width=30, date_pattern='y-mm-dd')
+        self.return_date = shamsi_calendar.ShamsiDateEntry(frame_1)
         self.return_date.grid(row=3, column=1, padx=10, pady=10)
 
         ttk.Button(frame_1, text='افزودن امانت', width=45, command=self.add_borrowings).grid(row=4, column=0, columnspan=2)
@@ -211,11 +214,13 @@ class LibraryApp(tk.Tk):
         frame_1.grid(row=0, column=0, padx=5, pady=5)
 
         ttk.Label(frame_1, text='از تاریخ:').grid(row=0, column=0, padx=5, pady=10)
-        self.member_stat_date_1 = DateEntry(frame_1, width=20, date_pattern='y-mm-dd')
+        # self.member_stat_date_1 = DateEntry(frame_1, width=20, date_pattern='y-mm-dd')
+        self.member_stat_date_1 = shamsi_calendar.ShamsiDateEntry(frame_1)
         self.member_stat_date_1.grid(row=0, column=1, padx=5, pady=10)
 
         ttk.Label(frame_1, text='تا تاریخ:').grid(row=0, column=2, padx=5, pady=10)
-        self.member_stat_date_2 = DateEntry(frame_1, width=20, date_pattern='y-mm-dd')
+        # self.member_stat_date_2 = DateEntry(frame_1, width=20, date_pattern='y-mm-dd')
+        self.member_stat_date_2 = shamsi_calendar.ShamsiDateEntry(frame_1)
         self.member_stat_date_2.grid(row=0, column=3, padx=5, pady=10)
 
         ttk.Button(tab, text='جستجو', width=20, command=self.show_result_member_stats).grid(row=0, column=4, padx=5, pady=10)
@@ -311,11 +316,13 @@ class LibraryApp(tk.Tk):
     def add_borrowings(self):
         id_member = self.member_name_borrow.get().split('.')[0]
         id_book = self.title_book_borrow.get().split('.')[0]
-        borrow_date = self.borrow_date.get_date()
-        return_date = self.return_date.get_date()
+        borrow_date = self.borrow_date.get()
+        return_date = self.return_date.get()
+
+        # print(borrow_date, type(borrow_date))
 
         if id_member != '' and id_book != '':
-            count_date = datetime.datetime(return_date.year, return_date.month, return_date.day)-datetime.datetime(borrow_date.year, borrow_date.month, borrow_date.day)
+            count_date = jdatetime.datetime(return_date.year, return_date.month, return_date.day)-jdatetime.datetime(borrow_date.year, borrow_date.month, borrow_date.day)
             if count_date.days >= 1:
                 result = db_s.add_borrow(id_member, id_book, borrow_date, return_date)
                 if result[0]:
@@ -373,8 +380,8 @@ class LibraryApp(tk.Tk):
     # --------- member stats
     def show_result_member_stats(self):
 
-        start_date = self.member_stat_date_1.get_date()
-        end_date = self.member_stat_date_2.get_date()
+        start_date = self.member_stat_date_1.get()
+        end_date = self.member_stat_date_2.get()
 
         self.table_5.delete(*self.table_5.get_children())
         items = db_s.show_member_stats(start_date, end_date)

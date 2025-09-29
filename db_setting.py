@@ -1,5 +1,5 @@
 import mysql.connector as conn
-import datetime
+import jdatetime
 
 
 def connection():
@@ -123,7 +123,7 @@ def add_borrow(member_id, book_id, borrow_date, return_date):
         
         cursor.execute('''
                 INSERT INTO borrowings (member_id, book_id, borrow_date, return_date) VALUES (%s, %s, %s, %s);
-            ''', (member_id, book_id, borrow_date, return_date))
+            ''', (member_id, book_id, borrow_date.strftime("%Y-%m-%d"), return_date.strftime("%Y-%m-%d")))
         
         cursor.execute('''
                 UPDATE books SET available=FALSE WHERE book_id=%s;
@@ -227,7 +227,7 @@ def back_book(borrowing_id):
                 ''', (book_id,))
         cnn.commit()
 
-        today = datetime.datetime.today()
+        today = jdatetime.datetime.today().date().strftime("%Y-%m-%d")
         cursor.execute('''
                     UPDATE borrowings SET actual_return_date=%s WHERE borrowing_id=%s;
                 ''', (today, borrowing_id))
@@ -246,11 +246,11 @@ def show_member_stats(start_date, end_date):
                     LEFT JOIN borrowings b ON m.member_id = b.member_id
                     AND b.borrow_date BETWEEN %s AND %s
                     GROUP BY m.member_id, m.name
-                    ORDER BY borrow_count DESC;''', (start_date, end_date))
+                    ORDER BY borrow_count DESC;''', (start_date.strftime("%Y-%m-%d"), end_date.strftime("%Y-%m-%d")))
     result = cursor.fetchall()
     cnn.close()
     return result
 
 
 if __name__ == '__main__':
-    print(show_borrow_for_table())
+    create_tables()
